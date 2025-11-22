@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steward Kit Ultra — Advanced Restoration Platform</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   THEME SYSTEM: Auto-detects prefers-color-scheme, supports manual override
+   Genres: Default (Earth), Medieval, Space, Anime, Cyberpunk, Forest
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --primary: #2d5016;
+  --primary-light: #4a7c2c;
+  --secondary: #8b4513;
+  --accent: #ff6b35;
+  --bg: #f5f5dc;
+  --card-bg: #ffffff;
+  --text: #2c3e20;
+  --text-muted: #666;
+  --border: #d4d4d4;
+  --success: #2d5016;
+  --warning: #ff8c00;
+  --danger: #dc143c;
+  --shadow: rgba(0,0,0,0.1);
+}
+
+[data-theme="dark"] {
+  --primary: #4a7c2c;
+  --primary-light: #6b9c3c;
+  --secondary: #b8860b;
+  --accent: #ff8c5a;
+  --bg: #1a1a1a;
+  --card-bg: #2d2d2d;
+  --text: #e0e0e0;
+  --text-muted: #aaa;
+  --border: #444;
+  --shadow: rgba(0,0,0,0.5);
+}
+
+[data-theme="medieval"] {
+  --primary: #8b0000;
+  --primary-light: #b22222;
+  --secondary: #daa520;
+  --accent: #ffd700;
+  --bg: #2f1b0c;
+  --card-bg: #3e2723;
+  --text: #f5deb3;
+  --text-muted: #d4a574;
+  --border: #8b4513;
+  font-family: 'Georgia', serif;
+}
+
+[data-theme="space"] {
+  --primary: #0d1b2a;
+  --primary-light: #1b263b;
+  --secondary: #415a77;
+  --accent: #00d9ff;
+  --bg: #000814;
+  --card-bg: #1b263b;
+  --text: #e0e1dd;
+  --text-muted: #778da9;
+  --border: #415a77;
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme="anime"] {
+  --primary: #ff1493;
+  --primary-light: #ff69b4;
+  --secondary: #9370db;
+  --accent: #00ffff;
+  --bg: #fff0f5;
+  --card-bg: #ffe4f0;
+  --text: #4b0082;
+  --text-muted: #9370db;
+  --border: #ff69b4;
+  font-family: 'Comic Sans MS', 'Segoe UI', sans-serif;
+}
+
+[data-theme="cyberpunk"] {
+  --primary: #00ff41;
+  --primary-light: #39ff14;
+  --secondary: #ff00ff;
+  --accent: #00ffff;
+  --bg: #0a0a0a;
+  --card-bg: #1a1a2e;
+  --text: #00ff41;
+  --text-muted: #0abdc6;
+  --border: #00ff41;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 5px var(--primary);
+}
+
+[data-theme="forest"] {
+  --primary: #1b4332;
+  --primary-light: #2d6a4f;
+  --secondary: #52b788;
+  --accent: #95d5b2;
+  --bg: #d8f3dc;
+  --card-bg: #f1faee;
+  --text: #081c15;
+  --text-muted: #40916c;
+  --border: #95d5b2;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GAMIFICATION HUD: Fixed top-right stats display
+   ═══════════════════════════════════════════════════════════════════════════ */
+.hud {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--card-bg);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  padding: 15px;
+  min-width: 280px;
+  box-shadow: 0 4px 20px var(--shadow);
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.hud-stat {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.hud-value {
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.hud-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 5px 0;
+}
+
+.hud-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width 0.5s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAVIGATION & LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════ */
+.header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 30px 20px;
+  text-align: center;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.header h1 {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+  border-bottom: 2px solid var(--border);
+  padding: 15px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  z-index: 999;
+  box-shadow: 0 2px 5px var(--shadow);
+}
+
+.nav button {
+  padding: 10px 20px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.nav button:hover {
+  background: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+.nav button.active {
+  background: var(--accent);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 20px auto;
+  padding: 0 20px 100px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLLAPSIBLE SECTIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.section {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 20px 0;
+  overflow: hidden;
+  box-shadow: 0 2px 10px var(--shadow);
+  transition: transform 0.3s;
+}
+
+.section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px var(--shadow);
+}
+
+.section-header {
+  background: var(--primary);
+  color: white;
+  padding: 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.section-header:hover {
+  background: var(--primary-light);
+}
+
+.section-title {
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+.section-toggle {
+  font-size: 1.5em;
+  transition: transform 0.3s;
+}
+
+.section-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease, padding 0.5s ease;
+  padding: 0 20px;
+}
+
+.section.expanded .section-content {
+  max-height: 10000px;
+  padding: 20px;
+}
+
+.section.expanded .section-toggle {
+  transform: rotate(180deg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORM CONTROLS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.form-group {
+  margin: 20px 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  transition: border 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: 'Courier New', monospace;
+}
+
+button {
+  padding: 12px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+  margin: 5px;
+}
+
+button:hover {
+  background: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px var(--shadow);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button.secondary {
+  background: var(--secondary);
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GRID LAYOUTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARDS & DATA DISPLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 5px var(--shadow);
+}
+
+.card-title {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--primary);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.data-table tr:hover {
+  background: var(--bg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOOLTIPS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  color: var(--accent);
+  margin-left: 5px;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 300px;
+  background-color: var(--card-bg);
+  color: var(--text);
+  text-align: left;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  padding: 15px;
+  position: absolute;
+  z-index: 1001;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -150px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  box-shadow: 0 4px 15px var(--shadow);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHARTS & VISUALIZATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.chart-container {
+  position: relative;
+  height: 300px;
+  margin: 20px 0;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 15px;
+}
+
+canvas {
+  max-width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGES & STATUS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 2px;
+}
+
+.badge-success { background: var(--success); color: white; }
+.badge-warning { background: var(--warning); color: white; }
+.badge-danger { background: var(--danger); color: white; }
+.badge-info { background: var(--accent); color: white; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEARCH & FILTERING
+   ═══════════════════════════════════════════════════════════════════════════ */
+.search-container {
+  margin: 20px 0;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 15px 45px 15px 15px;
+  font-size: 16px;
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.search-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL DIALOGS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background-color: var(--card-bg);
+  margin: 5% auto;
+  padding: 30px;
+  border: 2px solid var(--primary);
+  border-radius: 15px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.close {
+  color: var(--text-muted);
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.close:hover { color: var(--danger); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIMELINE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.timeline {
+  position: relative;
+  padding: 20px 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+}
+
+.timeline-item {
+  position: relative;
+  margin: 30px 0;
+  padding-left: calc(50% + 30px);
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: calc(50% - 10px);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 4px solid var(--primary);
+}
+
+.timeline-content {
+  background: var(--card-bg);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPECIES CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.species-card {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.species-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px var(--shadow);
+}
+
+.species-card h3 {
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.species-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--bg);
+  border-radius: 15px;
+  font-size: 11px;
+  margin: 3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media print {
+  body { background: white; color: black; }
+  .hud, .nav, button, .no-print { display: none; }
+  .section { page-break-inside: avoid; border: 1px solid #000; }
+  .section-content { max-height: none !important; padding: 20px !important; }
+  .section-header { background: #eee !important; color: #000 !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE DESIGN
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .hud { position: static; margin: 20px; }
+  .header h1 { font-size: 1.8em; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .tooltip .tooltiptext { width: 250px; margin-left: -125px; }
+  .timeline-item { padding-left: 30px; }
+  .timeline::before { left: 10px; }
+  .timeline-item::before { left: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 2s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CODE BLOCKS
+   ═══════════════════════════════════════════════════════════════════════════ */
+pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 15px;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+code {
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROGRESS INDICATORS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.5s;
+  transform-origin: 50% 50%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOTIFICATION SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+.notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  padding: 15px 25px;
+  box-shadow: 0 4px 20px var(--shadow);
+  z-index: 3000;
+  animation: slideDown 0.3s ease;
+  max-width: 500px;
+}
+
+.notification.success { border-color: var(--success); }
+.notification.warning { border-color: var(--warning); }
+.notification.danger { border-color: var(--danger); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAP CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.map-container {
+  width: 100%;
+  height: 400px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.footer {
+  background: var(--card-bg);
+  border-top: 2px solid var(--border);
+  padding: 30px 20px;
+  margin-top: 50px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.footer a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body data-theme="light">
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     GAMIFICATION HUD
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="hud">
+  <div style="text-align:center; margin-bottom:15px; font-weight:bold; font-size:16px; color:var(--primary)">
+    🌱 STEWARD STATUS
+  </div>
+  <div class="hud-stat">
+    <span>Keywords Detected</span>
+    <span class="hud-value" id="hudDetections">0</span>
+  </div>
+  <div class="hud-bar">
+    <div class="hud-bar-fill" id="hudProgress" style="width:0%"></div>
+  </div>
+  <div class="hud-stat">
+    <span>Threshold</span>
+    <span class="hud-value" id="hudThreshold">100</span>
+  </div>
+  <div class="hud-stat">
+    <span>RSS Entries</span>
+    <span class="hud-value" id="hudEntries">0</span>
+  </div>
+  <div class="hud-stat">
+    <span>Mycelial Species</span>
+    <span class="hud-value" id="hudSpecies">24</span>
+  </div>
+  <div class="hud-stat">
+    <span>Projects Active</span>
+    <span class="hud-value" id="hudProjects">0</span>
+  </div>
+  <div class="hud-stat">
+    <span>Status</span>
+    <span class="hud-value" id="hudStatus">🔵 Monitoring</span>
+  </div>
+  <div class="hud-stat">
+    <span>Level</span>
+    <span class="hud-value" id="hudLevel">Seedling 🌱</span>
+  </div>
+  <div class="hud-stat">
+    <span>XP</span>
+    <span class="hud-value" id="hudXP">0 / 1000</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="header">
+  <h1>🌍 Steward Kit Ultra v2.0</h1>
+  <p>Advanced Planetary Restoration, Monitoring & Evidence Platform</p>
+  <p style="font-size:0.9em; margin-top:10px; opacity:0.9">Offline-First • Zero-Harm • Auditable • Community-Driven</p>
+  <div style="margin-top:15px">
+    <label style="color:white; margin-right:10px; font-weight:600">Theme:</label>
+    <select id="themeSelector" style="padding:8px 15px; border-radius:6px; border:none; font-size:14px; font-weight:600; cursor:pointer">
+      <option value="light">🌍 Earth (Light)</option>
+      <option value="dark">🌙 Earth (Dark)</option>
+      <option value="medieval">⚔️ Medieval</option>
+      <option value="space">🚀 Space Explorer</option>
+      <option value="anime">✨ Anime</option>
+      <option value="cyberpunk">🤖 Cyberpunk</option>
+      <option value="forest">🌲 Deep Forest</option>
+    </select>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="nav">
+  <button onclick="scrollToSection('dashboard')">📊 Dashboard</button>
+  <button onclick="scrollToSection('rss-monitor')">📡 RSS Monitor</button>
+  <button onclick="scrollToSection('keyword-scan')">🔍 Keyword Scanner</button>
+  <button onclick="scrollToSection('mycelial-bank')">🍄 Mycelial Bank</button>
+  <button onclick="scrollToSection('narrative')">📝 Narrative Tools</button>
+  <button onclick="scrollToSection('projects')">🎯 Project Manager</button>
+  <button onclick="scrollToSection('evidence')">📊 Evidence Export</button>
+  <button onclick="scrollToSection('weather-climate')">🌦️ Weather/Climate</button>
+  <button onclick="scrollToSection('soil-analysis')">🧪 Soil Analysis</button>
+  <button onclick="scrollToSection('community')">👥 Community</button>
+  <button onclick="scrollToSection('timeline')">⏱️ Timeline</button>
+  <button onclick="scrollToSection('mapping')">🗺️ Mapping</button>
+  <button onclick="scrollToSection('resources')">📚 Resources</button>
+  <button onclick="scrollToSection('calculator')">🧮 Calculators</button>
+  <button onclick="scrollToSection('advanced')">⚙️ Advanced</button>
+  <button onclick="openModal('helpModal')">❓ Help</button>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION: DASHBOARD & ANALYTICS
+     Purpose: High-level overview of all system metrics and activity
+     Expected outcome: Real-time visualization of all platform activities
+     How to use: Auto-updates as you use other sections, click cards for details
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="section expanded" id="dashboard">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-title">📊 Real-Time Dashboard & Analytics</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-content">
+    <p>Comprehensive overview of all monitoring, restoration, and community activities.</p>
+    
+    <div class="grid-4" style="margin-top:20px">
+      <div class="card" style="text-align:center; cursor:pointer" onclick="scrollToSection('rss-monitor')">
+        <div style="font-size:3em">📡</div>
+        <div class="card-title">Feed Sources</div>
+        <div style="font-size:2em; color:var(--accent)" id="dashFeedCount">0</div>
+        <div style="font-size:0.9em; color:var(--text-muted)">Active Monitors</div>
+      </div>
+      
+      <div class="card" style="text-align:center; cursor:pointer" onclick="scrollToSection('keyword-scan')">
+        <div style="font-size:3em">🔍</div>
+        <div class="card-title">Detections</div>
+        <div style="font-size:2em; color:var(--accent)" id="dashDetectionCount">0</div>
+        <div style="font-size:0.9em; color:var(--text-muted)">Keyword Matches</div>
+      </div>
+      
+      <div class="card" style="text-align:center; cursor:pointer" onclick="scrollToSection('projects')">
+        <div style="font-size:3em">🎯</div>
+        <div class="card-title">Projects</div>
+        <div style="font-size:2em; color:var(--accent)" id="dashProjectCount">0</div>
+        <div style="font-size:0.9em; color:var(--text-muted)">Active Initiatives</div>
+      </div>
+      
+      <div class="card" style="text-align:center; cursor:pointer" onclick="scrollToSection('mycelial-bank')">
+        <div style="font-size:3em">🍄</div>
+        <div class="card-title">Species Bank</div>
+        <div style="font-size:2em; color:var(--accent)" id="dashSpeciesCount">24</div>
+        <div style="font-size:0.9em; color:var(--text-muted)">Available Pairings</div>
+      </div>
+    </div>
+    
+    <div class="grid-2" style="margin-top:30px">
+      <div class="card">
+        <div class="card-title">Activity Timeline (Last 7 Days)</div>
+        <div class="chart-container">
+          <canvas id="activityChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Keyword Detection Distribution</div>
+        <div class="chart-container">
+          <canvas id="keywordChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Recent Activity Log</div>
+      <div id="activityLog" style="max-height:300px; overflow-y:auto">
+        <div style="padding:10px; color:var(--text-muted); text-align:center">No activity yet. Start by configuring RSS feeds or adding projects.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 1: RSS MONITOR & FEED INGESTION
+     Purpose: Ingest and parse RSS/Atom feeds from multiple sources
+     Expected outcome: Parsed entries stored in IndexedDB for offline access
+     How to use: Enter feed URLs (one per line) or paste XML directly
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="rss-monitor">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-title">📡 RSS Feed Monitor & Ingestion System</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-content">
+    <p>Monitor multiple RSS/Atom feeds for keyword signals. All data stored locally in IndexedDB for offline access and analysis.</p>
+    
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Feed URLs 
+          <span class="tooltip">ℹ️
+            <span class="tooltiptext">
+              <strong>Purpose:</strong> Fetch and parse RSS/Atom feeds from news sources, blogs, government alerts, or scientific publications.<br><br>
+              <strong>How to use:</strong> Enter one URL per line. Click "Fetch All Feeds" to retrieve. System checks every URL and handles errors gracefully.<br><br>
+              <strong>Expected outcome:</strong> Entries parsed, deduplicated, and stored in IndexedDB. Visible in searchable table below.<br><br>
+              <strong>Note:</strong> CORS may block some feeds. Use paste method as fallback. Auto-refresh available for continuous monitoring.
+            </span>
+          </span>
+        </div>
+        <div class="form-group">
+          <label>Feed URLs (one per line)</label>
+          <textarea id="feedUrls" placeholder="https://example.com/feed.xml
+https://news.example.org/rss
+https://sciencedaily.com/rss/all.xml"></textarea>
+        </div>
+        <button onclick="fetchAllFeeds()">🔄 Fetch All Feeds</button>
+        <button class="secondary" onclick="loadSampleFeeds()">📋 Load Sample Feeds</button>
+        <button class="secondary" onclick="clearAllFeeds()">🗑️ Clear Feeds</button>
+        <div style="margin-top:15px">
+          <label><input type="checkbox" id="autoRefresh"> Auto-refresh every 
+            <select id="refreshInterval" style="padding:5px">
+              <option value="5">5 min</option>
+              <option value="15" selected>15 min</option>
+              <option value="30">30 min</option>
+              <option value="60">1 hour</option>
+            </select>
+          </label>
+        </div>
+        <div id="feedStatus" style="margin-top:15px; font-size:13px; padding:10px; background:var(--bg); border-radius:6px"></div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Paste XML (CORS-Free Method)</div>
+        <div class="form-group">
+          <label>Paste RSS/Atom XML directly</label>
+          <textarea id="rssPaste" placeholder="<rss version='2.0'>
+  <channel>
+    <title>Example Feed</title>
+    <item>
+      <title>Article Title</title>
+      <description>Content here...</description>
+    </item>
+  </channel>
+</rss>"></textarea>
+        </div>
+        <button onclick="parseXMLPaste()">📥 Parse Pasted XML</button>
+        <button class="secondary" onclick="document.getElementById('rssPaste').value=''">🧹 Clear</button>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Search & Filter Entries 
+        <span class="tooltip">ℹ️
+          <span class="tooltiptext">
+            <strong>Purpose:</strong> Filter and search all parsed RSS entries by title, description, source, or date range.<br><br>
+            <strong>How to use:</strong> Type search terms for instant filtering. Use date pickers to narrow timeframe. Results update in real-time.<br><br>
+            <strong>Expected outcome:</strong> Filtered, sortable view of matching entries with export options.
+          </span>
+        </span>
+      </div>
+      <div class="grid-2">
+        <div class="search-container">
+          <input type="text" id="entrySearch" class="search-input" placeholder="🔍 Search entries by title, description, or content..." oninput="filterEntries()">
+        </div>
+        <div style="display:flex; gap:10px">
+          <div class="form-group" style="flex:1; margin:0">
+            <label>From Date</label>
+            <input type="date" id="dateFrom" onchange="filterEntries()">
+          </div>
+          <div class="form-group" style="flex:1; margin:0">
+            <label>To Date</label>
+            <input type="date" id="dateTo" onchange="filterEntries()">
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap">
+        <button onclick="sortEntries('date')">📅 Sort by Date</button>
+        <button onclick="sortEntries('title')">🔤 Sort by Title</button>
+        <button onclick="sortEntries('source')">📰 Sort by Source</button>
+        <button class="secondary" onclick="exportEntries('json')">💾 Export JSON</button>
+        <button class="secondary" onclick="exportEntries('csv')">📊 Export CSV</button>
+        <button class="secondary" onclick="exportEntries('markdown')">📝 Export Markdown</button>
+        <button onclick="showEntryStats()">📈 Show Statistics</button>
+      </div>
+      <div id="entryStats" style="margin-top:15px; padding:15px; background:var(--bg); border-radius:8px; display:none"></div>
+      <div id="entriesDisplay" style="margin-top:20px; max-height:500px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 2: KEYWORD SCANNING & THRESHOLD MONITORING
+     Purpose: Scan entries for configured keywords, track toward threshold
+     Expected outcome: Real-time detection count, trigger action at threshold
+     How to use: Enter keywords (comma-separated), set threshold, click Scan
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="keyword-scan">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-title">🔍 Keyword Scanner & Threshold Monitor</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-content">
+    <p>Configure keyword petition rules and scan entries. When detection threshold is reached, system triggers configured meta-domain response actions.</p>
+    
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Keyword Configuration 
+          <span class="tooltip">ℹ️
+            <span class="tooltiptext">
+              <strong>Purpose:</strong> Define keywords to monitor across all RSS entries. System tracks frequency and triggers actions at threshold.<br><br>
+              <strong>How to use:</strong> Enter keywords separated by commas. Use quotes for exact phrases. Set threshold (default: 100). Configure response actions.<br><br>
+              <strong>Expected outcome:</strong> Real-time detection counter. Alert when threshold reached. Evidence log for audit trail.<br><br>
+              <strong>Examples:</strong> "climate emergency", extinction, continuity, resilience
+            </span>
+          </span>
+        </div>
+        <div class="form-group">
+          <label>Keywords (comma-separated, use "quotes" for exact phrases)</label>
+          <textarea id="kwInput" placeholder='extinction, "continuity of government", bunker, collapse, resilience, climate crisis'>extinction, continuity, bunker, collapse, emergency, crisis, breakdown, disruption</textarea>
+        </div>
+        <div class="form-group">
+          <label>Detection Threshold (trigger at this count)</label>
+          <input type="number" id="threshold" value="100" min="1">
+        </div>
+        <div class="form-group">
+          <label>Scan Mode</label>
+          <select id="scanMode">
+            <option value="all">All Text (title + description + content)</option>
+            <option value="title">Title Only</option>
+            <option value="description">Description Only</option>
+            <option value="smart">Smart (weighted by context)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="caseSensitive"> Case-sensitive matching</label>
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="wholeWord"> Match whole words only</label>
+        </div>
+        <button onclick="scanKeywords()">🔍 Scan All Entries</button>
+        <button class="secondary" onclick="resetDetections()">🔄 Reset Detections</button>
+        <button class="secondary" onclick="exportDetections()">💾 Export Detection Report</button>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Detection Status</div>
+        <div style="text-align:center; padding:30px">
+          <div style="font-size:4em; color:var(--accent)" id="detectionCount">0</div>
+          <div style="font-size:1.2em; margin:10px 0">Detections</div>
+          <div class="hud-bar" style="max-width:300px; margin:20px auto">
+            <div class="hud-bar-fill" id="scanProgress" style="width:0%"></div>
+          </div>
+          <div style="margin-top:10px">
+            <span id="progressText">0 / 100</span>
+            <span id="progressPercent" style="margin-left:15px; color:var(--text-muted)">(0%)</span>
+          </div>
+          <div style="margin-top:30px; padding:20px; border-radius:8px; background:var(--bg)">
+            <div style="font-weight:600; margin-bottom:10px">Trigger Status</div>
+            <div id="triggerStatus" style="font-size:1.5em; color:var(--warning)">⚠️ Not Triggered</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Detection Details & Context Analysis</div>
+      <div style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap">
+        <button onclick="showDetectionsByKeyword()">📊 Group by Keyword</button>
+        <button onclick="showDetectionsBySource()">📰 Group by Source</button>
+        <button onclick="showDetectionsByDate()">📅 Group by Date</button>
+        <button onclick="visualizeDetectionTrends()">📈 Visualize Trends</button>
+      </div>
+      <div id="detectionDetails" style="max-height:400px; overflow-y:auto"></div>
+    </div>
+    
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Threshold Response Configuration 
+        <span class="tooltip">ℹ️
+          <span class="tooltiptext">
+            <strong>Purpose:</strong> Define actions to automatically trigger when detection threshold is reached.<br><br>
+            <strong>How to use:</strong> Configure response type, notification methods, and automated workflows.<br><br>
+            <strong>Expected outcome:</strong> Automated evidence export, notification dispatch, community alerts when threshold hit.
+          </span>
+        </span>
+      </div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Response Type</label>
+          <select id="responseType">
+            <option value="alert">Alert Only</option>
+            <option value="export">Auto-Export Evidence</option>
+            <option value="notify">Send Notifications</option>
+            <option value="full">Full Response (All Actions)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notification Email (optional)</label>
+          <input type="email" id="notifyEmail" placeholder="admin@example.org">
+        </div>
+        <div class="form-group">
+          <label>Auto-Export Format</label>
+          <select id="autoExportFormat">
+            <option value="json">JSON</option>
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF Report</option>
+            <option value="all">All Formats</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Custom Response Message (appears in trigger alert)</label>
+        <textarea id="responseMessage" placeholder="Threshold reached. Initiating community response protocol...">Keyword petition threshold has been reached. Evidence package auto-generated. Community stewards have been notified to begin local pilot initiatives.</textarea>
+      </div>
+      <button onclick="saveResponseConfig()">💾 Save Configuration</button>
+      <button class="secondary" onclick="testTrigger()">🧪 Test Trigger</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 3: MYCELIAL BANK - SPECIES DATABASE
+     Purpose: Comprehensive database of plant-mycorrhizal pairings for restoration
+     Expected outcome: Searchable, filterable species bank with ecological data
+     How to use: Browse, search, filter by biome/purpose, export planting guides
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="mycelial-bank">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-title">🍄 Mycelial Bank - Restoration Species Database</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-content">
+    <p>Comprehensive database of plant-mycorrhizal fungus pairings for ecosystem restoration. All species include biome suitability, planting guidance, and ecological functions.</p>
+    
+    <div class="card">
+      <div class="card-title">Search & Filter Species 
+        <span class="tooltip">ℹ️
+          <span class="tooltiptext">
+            <strong>Purpose:</strong> Find appropriate plant-fungus pairings for your restoration project based on climate, soil, and purpose.<br><br>
+            <strong>How to use:</strong> Use filters to narrow by biome, hardiness zone, soil type, or ecological function. Click species for detailed info.<br><br>
+            <strong>Expected outcome:</strong> Customized species recommendations. Export as planting guide or GIS-ready CSV.
+          </span>
+        </span>
+      </div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Search Species</label>
+          <input type="text" id="speciesSearch" placeholder="🔍 Search by name, function, or genus..." oninput="filterSpecies()">
+        </div>
+        <div class="form-group">
+          <label>Filter by Biome</label>
+          <select id="biomeFilter" onchange="filterSpecies()">
+            <option value="">All Biomes</option>
+            <option value="temperate">Temperate</option>
+            <option value="boreal">Boreal/Taiga</option>
+            <option value="prairie">Prairie/Grassland</option>
+            <option value="desert">Desert/Arid</option>
+            <option value="tropical">Tropical/Subtropical</option>
+            <option value="mediterranean">Mediterranean</option>
+            <option value="alpine">Alpine/Mountain</option>
+            <option value="wetland">Wetland/Riparian</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Filter by Purpose</label>
+          <select id="purposeFilter" onchange="filterSpecies()">
+            <option value="">All Purposes</option>
+            <option value="erosion">Erosion Control</option>
+            <option value="nitrogen">Nitrogen Fixation</option>
+            <option value="carbon">Carbon Sequestration</option>
+            <option value="biodiversity">Biodiversity Support</option>
+            <option value="food">Food Production</option>
+            <option value="remediation">Soil Remediation</option>
+            <option value="water">Water Management</option>
+            <option value="windbreak">Windbreak/Shelter</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap">
+        <button onclick="showAllSpecies()">🌿 Show All Species</button>
+        <button onclick="addCustomSpecies()">➕ Add Custom Species</button>
+        <button class="secondary" onclick="exportSpeciesBank('json')">💾 Export JSON</button>
+        <button class="secondary" onclick="exportSpeciesBank('csv')">📊 Export CSV (GIS-Ready)</button>
+        <button class="secondary" onclick="exportSpeciesBank('pdf')">📄 Export Planting Guide</button>
+        <button onclick="generatePlantingCalendar()">📅 Generate Planting Calendar</button>
+      </div>
+    </div>
+    
+    <div class="grid-3" id="speciesDisplay" style="margin-top:20px">
+      <!-- Species cards populated by JavaScript -->
+    </div>
+    
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Planting Calculator 
+        <span class="tooltip">ℹ️
+          <span class="tooltiptext">
+            <strong>Purpose:</strong> Calculate quantities, spacing, and materials needed for your restoration project.<br><br>
+            <strong>How to use:</strong> Enter project area, select species, get material estimates and cost projections.<br><br>
+            <strong>Expected outcome:</strong> Shopping list with quantities, spacing diagrams, timeline estimates.
+          </span>
+        </span>
+      </div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Project Area (acres)</label>
+          <input type="number" id="projectArea" value="1" min="0.1" step="0.1" oninput="calculatePlanting()">
+        </div>
+        <div class="form-group">
+          <label>Planting Density</label>
+          <select id="plantingDensity" onchange="calculatePlanting()">
+            <option value="low">Low (200-400 plants/acre)</option>
+            <option value="medium" selected>Medium (400-800 plants/acre)</option>
+            <option value="high">High (800-1200 plants/acre)</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Budget (optional, USD)</label>
+          <input type="number" id="projectBudget" placeholder="e.g., 5000" oninput="calculatePlanting()">
+        </div>
+      </div>
+      <div id="plantingCalculation" style="margin-top:20px; padding:20px; background:var(--bg); border-radius:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 4: NARRATIVE REFRAMING & PETITION BUILDER
+     Purpose: Transform crisis language into regenerative action frameworks
+     Expected outcome: Ready-to-use petition texts, media talking points
+     How to use: Select reframing style, generate content, customize, export
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="narrative">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-title">📝 Narrative Reframing & Petition Builder</span>
+    <span class="section-toggle">▼</span>
+  </div>
+  <div class="section-content">
+    <p>Transform extraction-focused crisis narratives into regenerative stewardship frameworks. Generate petitions, council briefings, and media talking points.</p>
+    
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Reframing Engine 
+          <span class="tooltip">ℹ️
+            <span class="tooltiptext">
+              <strong>Purpose:</strong> Convert detected crisis keywords into positive, actionable community response frameworks.<br><br>
+              <strong>How to use:</strong> Select reframing style based on your audience (ecology-first, justice-first, technical, or practical).<br><br>
+              <strong>Expected outcome:</strong> Generated text ready for petitions, council presentations, or media releases.
+            </span>
+          </span>
+        </div>
+        <div class="form-group">
+          <label>Reframing Style</label>
+          <select id="reframeStyle">
+            <option value="regenerative">🌱 Regenerative (Ecology-First)</option>
+            <option value="justice">⚖️ Human Rights (Justice-First)</option>
+            <option value="technical">🔬 Technical (Data + Evidence)</option>
+            <option value="practical">🛠️ Practical (Pilots + Jobs)</option>
+            <option value="youth">👥 Youth-Focused (Future Generations)</option>
+            <option value="economic">💰 Economic (Investment + ROI)</option>
+            <option value="spiritual">🕊️ Spiritual (Values + Meaning)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Target Audience</label>
+          <select id="targetAudience">
+            <option value="council">City Council / Municipal</option>
+            <option value="media">Media / Press</option>
+            <option value="community">Community Members</option>
+            <option value="funders">Funders / Investors</option>
+            <option value="youth">Youth / Students</option>
+            <option value="technical">Technical / Scientific</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tone</label>
+          <select id="narrativeTone">
+            <option value="urgent">Urgent but Hopeful</option>
+            <option value="collaborative" selected>Collaborative</option>
+            <option value="technical">Technical/Neutral</option>
+            <option value="inspirational">Inspirational</option>
+          </select>
+        </div>
+        <button onclick="generateNarrative()">✨ Generate Narrative</button>
+        <button class="secondary" onclick="loadNarrativeTemplate()">📋 Load Template</button>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Quick Stats for Narrative</div>
+        <div style="background:var(--bg); padding:15px; border-radius:8px; margin-bottom:15px">
+          <div style="margin:8px 0"><strong>Detections:</strong> <span id="narDetections">0</span></div>
+          <div style="margin:8px 0"><strong>Top Keywords:</strong> <span id="narKeywords">—</span></div>
+          <div style="margin:8px 0"><strong>Time Period:</strong> <span id="narTimeRange">—</span></div>
+          <div style="margin:8px 0"><strong>Sources:</strong> <span id="narSources">0</span></div>
+        </div>
+        <div class="form-group">
+          <label>Custom Context (optional)</label>
+          <textarea id="customContext" placeholder="Add specific local context, recent events, or community concerns..."></textarea>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">Generated Content</div>
+      <div style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap">
+        <button onclick="copyNarrative()">📋 Copy to Clipboard</button>
+        <button onclick="downloadNarrative('txt')">💾 Download .txt</button>
+        <button onclick="downloadNarrative('pdf')">📄 Download PDF</button>
+        <button onclick="downloadNarrative('docx')">📝 Download .docx</button>
+        <button class="secondary" onclick="shareNarrative()">🔗 Generate Share Link</button>
+      </div>
+      <div id="narrativeOutput" style="background:var(--bg); padding:20px; border-radius:8px; min-height:200px; white-space:pre-wrap; line-height:1.8">
+        <em style="color:var(--text-muted)">Generated narrative will appear here. Click "Generate Narrative" to begin.</em>
+      </div>
+    </div>
+    
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <div class="card-title">Petition Builder</div>
+        <div class="form-group">
+          <label>Petition Title</label>
+          <input type="text" id="petitionTitle" placeholder="e.g., Launch Community Restoration Pilots">
+        </div>
+        <div class="form-group">
+          <label>Primary Demand</label>
+          <textarea id="petitionDemand" placeholder="We demand immediate funding for..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Supporting Evidence</label>
+          <textarea id="petitionEvidence" placeholder="Based on [detection count] documented mentions of..."></textarea>
+        </div>
+        <button onclick="generatePetition()">📜 Generate Full Petition</button>
+        <button class="secondary" onclick="previewPetition()">👁️ Preview</button>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Talking Points Generator</div>
+        <div class="form-group">
+          <label>Number of Talking Points</label>
+          <input type="number" id="talkingPointCount" value="5" min="3" max="10">
+        </div>
+        <div class="form-group">
+          <label>Format</label>
+          <select id="talkingPointFormat">
+            <option value="bullets">Bullet Points</option>
+            <option value="numbered">Numbered List</option>
+            <option value="qa">Q&A Format</option>
+            <option value="soundbites">Social Media Soundbites</option>
+          </select>
+        </div
